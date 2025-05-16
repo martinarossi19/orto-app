@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordine Ortofrutta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #f6f8f5;
+      color: #333;
+      padding: 20px;
+      margin: 0;
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    h2 {
+      color: #4caf50;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 90%;
+      max-width: 300px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      min-width: 600px;
+      background-color: #fff;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      border: 1px solid #e0e0e0;
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #a5d6a7;
+      color: #fff;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      padding: 5px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 20px;
+      margin: 10px 10px 10px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    button:disabled {
+      background-color: #a5d6a7;
+      cursor: not-allowed;
+    }
+
+    #orderSummary {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 100%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Inserisci il tuo nome:</h2>
+  <input type="text" id="customerName" placeholder="Nome cliente">
+  
+  <h2>Ordina i tuoi prodotti:</h2>
+  <div class="table-container">
+    <table id="orderTable">
+      <thead>
+        <tr>
+          <th>Prodotto</th>
+          <th>Casse</th>
+          <th>Kg</th>
+          <th>Numero</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <button onclick="generateSummary()">Vedi Resoconto</button>
+  <button onclick="submitOrder()" id="submitButton" disabled>Invia Ordine</button>
+
+  <h2>Resoconto ordine:</h2>
+  <div id="orderSummary"></div>
+
+  <script>
+    const products = [
+      "Mele", "Pere", "Banane", "Arance", "Kiwi",
+      "Fragole", "Uva", "Carote", "Zucchine", "Pomodori",
+      "Cetrioli", "Insalata", "Patate", "Cipolle", "Peperoni"
+    ];
+
+    const tbody = document.querySelector("#orderTable tbody");
+
+    products.forEach(product => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${product}</td>
+        <td><input type="number" min="0" value="0" class="casse" onchange="exclusiveInput(this)"></td>
+        <td><input type="number" min="0" value="0" class="kg" onchange="exclusiveInput(this)"></td>
+        <td><input type="number" min="0" value="0" class="numero" onchange="exclusiveInput(this)"></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    function exclusiveInput(input) {
+      const row = input.parentElement.parentElement;
+      const inputs = row.querySelectorAll("input");
+
+      if (input.value > 0) {
+        inputs.forEach(i => {
+          if (i !== input) i.disabled = true;
+        });
+      } else {
+        inputs.forEach(i => i.disabled = false);
+      }
+    }
+
+    function generateSummary() {
+      const name = document.getElementById("customerName").value.trim();
+      const summary = [];
+      const ordini = [];
+
+      if (!name) {
+        alert("Inserisci il tuo nome.");
+        return;
+      }
+
+      const rows = tbody.querySelectorAll("tr");
+
+      rows.forEach(row => {
+        const prodotto = row.cells[0].textContent;
+        const casse = parseInt(row.cells[1].querySelector("input").value);
+        const kg = parseInt(row.cells[2].querySelector("input").value);
+        const numero = parseInt(row.cells[3].querySelector("input").value);
+
+        if (casse > 0) {
+          ordini.push({ prodotto, quantità: casse, unità: "casse" });
+          summary.push(`${prodotto}: ${casse} casse`);
+        } else if (kg > 0) {
+          ordini.push({ prodotto, quantità: kg, unità: "kg" });
+          summary.push(`${prodotto}: ${kg} kg`);
+        } else if (numero > 0) {
+          ordini.push({ prodotto, quantità: numero, unità: "pz" });
+          summary.push(`${prodotto}: ${numero} pz`);
+        }
+      });
+
+      const div = document.getElementById("orderSummary");
+
+      if (ordini.length === 0) {
+        div.innerHTML = "<i>Nessun prodotto selezionato.</i>";
+        document.getElementById("submitButton").disabled = true;
+        return;
+      }
+
+      div.innerHTML = `<b>${name}</b><ul>` + summary.map(s => `<li>${s}</li>`).join("") + "</ul>";
+
+      window.currentOrder = {
+        nome: name,
+        ordini: ordini
+      };
+
+      document.getElementById("submitButton").disabled = false;
+    }
+
+    function submitOrder() {
+      if (!window.currentOrder) {
+        alert("Genera prima il resoconto.");
+        return;
+      }
+
+      fetch("https://script.google.com/macros/s/AKfycbzbt8F9QRI4XCOdUYHvtYJjotB10qGO-wpK33LJmVAE47zwopqHdqY7T0PRvvDwWEK0SQ/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(window.currentOrder)
+      });
+
+      alert("Ordine inviato con successo!");
+      document.getElementById("submitButton").disabled = true;
+    }
+  </script>
+</body>
+</html>
