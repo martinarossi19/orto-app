@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestione Ordini - Venditore</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #4caf50;
+    }
+    .cliente-box {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #a5d6a7;
+      color: white;
+    }
+    button {
+      margin-top: 10px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #riepilogo {
+      background: #ffffff;
+      margin-top: 40px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Ordini Ricevuti</h1>
+  <div id="ordiniContainer"></div>
+
+  <h2>Riepilogo Totale</h2>
+  <div id="riepilogo"></div>
+  <button onclick="generaPDFRiepilogo()">Scarica PDF riepilogo</button>
+
+  <script>
+    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT84txLJB4AQ4oIEpaS1JUUpXVxxSaPXC9JpdgdW3uo_khe_Ldo-dl84t7t9HY6M6NTPeqhgc0ueTjP/pub?output=csv";
+
+    async function caricaOrdini() {
+      const response = await fetch(csvUrl);
+      const csv = await response.text();
+      const righe = csv.trim().split("\n").slice(1); // Salta intestazione
+      const ordiniPerCliente = {};
+      const riepilogo = {};
+
+      righe.forEach(riga => {
+        const [timestamp, nome, prodotto, quantità, unità] = riga.split(",");
+
+        if (!ordiniPerCliente[nome]) ordiniPerCliente[nome] = [];
+        ordiniPerCliente[nome].push({ prodotto, quantità, unità });
+
+        const chiave = `${prodotto} (${unità})`;
+        riepilogo[chiave] = (riepilogo[chiave] || 0) + parseFloat(quantità);
+      });
+
+      mostraOrdini(ordiniPerCliente);
+      mostraRiepilogo(riepilogo);
+    }
+
+    function mostraOrdini(ordiniPerCliente) {
+      const container = document.getElementById("ordiniContainer");
+      container.innerHTML = "";
+
+      for (const cliente in ordiniPerCliente) {
+        const box = document.createElement("div");
+        box.className = "cliente-box";
+        box.innerHTML = `<h3>${cliente}</h3>`;
+
+        const tabella = document.createElement("table");
+        tabella.innerHTML = `
+          <thead><tr><th>Prodotto</th><th>Quantità</th><th>Unità</th></tr></thead>
+          <tbody>
+            ${ordiniPerCliente[cliente].map(o => `
+              <tr><td>${o.prodotto}</td><td>${o.quantità}</td><td>${o.unità}</td></tr>
+            `).join("")}
+          </tbody>
+        `;
+
+        const btnPDF = document.createElement("button");
+        btnPDF.textContent = "Scarica PDF ordine";
+        btnPDF.onclick = () => {
+          const clone = box.cloneNode(true);
+          clone.querySelector("button").remove(); // rimuove il pulsante dal PDF
+          html2pdf().from(clone).save(`ordine_${cliente}.pdf`);
+        };
+
+        box.appendChild(tabella);
+        box.appendChild(btnPDF);
+        container.appendChild(box);
+      }
+    }
+
+    function mostraRiepilogo(riepilogo) {
+      const div = document.getElementById("riepilogo");
+      const righe = Object.entries(riepilogo).map(([k, v]) => `
+        <tr><td>${k}</td><td>${v}</td></tr>
+      `).join("");
+
+      div.innerHTML = `
+        <table>
+          <thead><tr><th>Prodotto</th><th>Totale</th></tr></thead>
+          <tbody>${righe}</tbody>
+        </table>
+      `;
+    }
+
+    function generaPDFRiepilogo() {
+      const el = document.getElementById("riepilogo");
+      html2pdf().from(el).save("riepilogo_totale.pdf");
+    }
+
+    caricaOrdini();
+  </script>
+
+</body>
+</html>
