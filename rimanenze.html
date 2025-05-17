@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rimanenze Giornaliere</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f1f8e9;
+    }
+    h1 {
+      color: #388e3c;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #aed581;
+    }
+    input {
+      width: 95%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Inserisci Rimanenze di Fine Giornata</h1>
+  <table id="rimanenzeTable">
+    <thead>
+      <tr>
+        <th>Prodotto</th>
+        <th>Quantità</th>
+        <th>Unità</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="text" placeholder="Es: Pomodori"></td>
+        <td><input type="number" step="any" placeholder="Es: 2.5"></td>
+        <td><input type="text" placeholder="Es: kg"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button onclick="aggiungiRiga()">➕ Aggiungi riga</button>
+  <button onclick="scaricaPDF()">📄 Scarica PDF rimanenze</button>
+
+  <script>
+    function aggiungiRiga() {
+      const table = document.getElementById("rimanenzeTable").getElementsByTagName('tbody')[0];
+      const newRow = table.insertRow();
+      for (let i = 0; i < 3; i++) {
+        const cell = newRow.insertCell(i);
+        const input = document.createElement("input");
+        input.type = i === 1 ? "number" : "text";
+        if (i === 1) input.step = "any";
+        input.placeholder = i === 0 ? "Es: Pomodori" : (i === 1 ? "Es: 2.5" : "Es: kg");
+        cell.appendChild(input);
+      }
+    }
+
+    function scaricaPDF() {
+      const tabella = document.getElementById("rimanenzeTable").cloneNode(true);
+      const inputs = tabella.getElementsByTagName("input");
+      for (let input of inputs) {
+        const value = input.value || "-";
+        const cell = document.createElement("span");
+        cell.textContent = value;
+        input.parentNode.replaceChild(cell, input);
+      }
+
+      const contenitore = document.createElement("div");
+      contenitore.innerHTML = `<h2>Rimanenze - ${new Date().toLocaleDateString()}</h2>`;
+      contenitore.appendChild(tabella);
+
+      html2pdf().from(contenitore).save(`rimanenze_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+  </script>
+
+</body>
+</html>
