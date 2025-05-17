@@ -62,7 +62,7 @@
   <h1>Ordini Ricevuti</h1>
   <div id="ordiniContainer"></div>
 
-  <h2>Riepilogo Totale</h2>
+  <h2>Riepilogo Totale per Data di Consegna</h2>
   <div id="riepilogo"></div>
   <button onclick="generaPDFRiepilogo()">Scarica PDF riepilogo</button>
 
@@ -72,25 +72,27 @@
     async function caricaOrdini() {
       const response = await fetch(csvUrl);
       const csv = await response.text();
-      const righe = csv.trim().split("\n").slice(1); // salta intestazione
+      const righe = csv.trim().split("\n").slice(1);
 
       const ordiniPerData = {};
-      const riepilogo = {};
+      const riepilogoPerData = {};
 
       righe.forEach(riga => {
         const [timestamp, nome, dataConsegna, prodotto, quantità, unità] = riga.split(",").map(c => c.trim());
 
+        // Ordini per cliente
         if (!ordiniPerData[dataConsegna]) ordiniPerData[dataConsegna] = {};
         if (!ordiniPerData[dataConsegna][nome]) ordiniPerData[dataConsegna][nome] = [];
-
         ordiniPerData[dataConsegna][nome].push({ prodotto, quantità, unità });
 
+        // Riepilogo per data
+        if (!riepilogoPerData[dataConsegna]) riepilogoPerData[dataConsegna] = {};
         const key = `${prodotto} (${unità})`;
-        riepilogo[key] = (riepilogo[key] || 0) + parseFloat(quantità);
+        riepilogoPerData[dataConsegna][key] = (riepilogoPerData[dataConsegna][key] || 0) + parseFloat(quantità);
       });
 
       mostraOrdini(ordiniPerData);
-      mostraRiepilogo(riepilogo);
+      mostraRiepilogo(riepilogoPerData);
     }
 
     function mostraOrdini(ordiniPerData) {
@@ -133,23 +135,31 @@
       });
     }
 
-    function mostraRiepilogo(riepilogo) {
-      const div = document.getElementById("riepilogo");
-      const righe = Object.entries(riepilogo).map(([k, v]) => `
-        <tr><td>${k}</td><td>${v.toFixed(2)}</td></tr>
-      `).join("");
+    function mostraRiepilogo(riepilogoPerData) {
+      const container = document.getElementById("riepilogo");
+      container.innerHTML = "";
 
-      div.innerHTML = `
-        <table>
-          <thead><tr><th>Prodotto</th><th>Totale</th></tr></thead>
-          <tbody>${righe}</tbody>
-        </table>
-      `;
+      Object.keys(riepilogoPerData).sort().forEach(data => {
+        const section = document.createElement("div");
+        section.innerHTML = `<h3>${data}</h3>`;
+
+        const righe = Object.entries(riepilogoPerData[data])
+          .map(([prod, qty]) => `<tr><td>${prod}</td><td>${qty.toFixed(2)}</td></tr>`).join("");
+
+        section.innerHTML += `
+          <table>
+            <thead><tr><th>Prodotto</th><th>Totale</th></tr></thead>
+            <tbody>${righe}</tbody>
+          </table>
+        `;
+
+        container.appendChild(section);
+      });
     }
 
     function generaPDFRiepilogo() {
       const el = document.getElementById("riepilogo");
-      html2pdf().from(el).save("riepilogo_totale.pdf");
+      html2pdf().from(el).save("riepilogo_per_data.pdf");
     }
 
     caricaOrdini();
