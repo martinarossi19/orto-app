@@ -15,11 +15,10 @@
       max-width: 100vw;
       overflow-x: hidden;
     }
-
     h2 {
       color: #4caf50;
+      margin-top: 40px;
     }
-
     input[type="text"] {
       padding: 10px;
       width: 90%;
@@ -29,14 +28,12 @@
       border-radius: 8px;
       margin-bottom: 20px;
     }
-
     .table-container {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       width: 100%;
       margin-bottom: 40px;
     }
-
     table {
       width: 100%;
       min-width: 600px;
@@ -46,18 +43,15 @@
       overflow: hidden;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-
     th, td {
       border: 1px solid #e0e0e0;
       padding: 12px;
       text-align: center;
     }
-
     th {
       background-color: #a5d6a7;
       color: #fff;
     }
-
     input[type="number"] {
       width: 60px;
       padding: 5px;
@@ -66,7 +60,6 @@
       border: 1px solid #ccc;
       text-align: center;
     }
-
     button {
       background-color: #4caf50;
       color: white;
@@ -78,16 +71,13 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
-
     button:hover {
       background-color: #45a049;
     }
-
     button:disabled {
       background-color: #a5d6a7;
       cursor: not-allowed;
     }
-
     #orderSummary {
       background-color: #ffffff;
       border-radius: 8px;
@@ -95,7 +85,6 @@
       max-width: 100%;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
     ul {
       padding-left: 20px;
     }
@@ -106,7 +95,7 @@
   <h2>Inserisci il tuo nome:</h2>
   <input type="text" id="customerName" placeholder="Nome cliente">
 
-  <h2>Lista Frutta 🍎</h2>
+  <h2>🍎 Frutta</h2>
   <div class="table-container">
     <table id="fruitTable">
       <thead>
@@ -120,10 +109,24 @@
       <tbody></tbody>
     </table>
   </div>
-
-  <h2>Lista Verdura 🥕</h2>
+  <h2>🥬 Verdura</h2>
   <div class="table-container">
-    <table id="vegetableTable">
+    <table id="vegTable">
+      <thead>
+        <tr>
+          <th>Prodotto</th>
+          <th>Casse</th>
+          <th>Kg</th>
+          <th>Numero</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h2>🍳 Altro</h2>
+  <div class="table-container">
+    <table id="otherTable">
       <thead>
         <tr>
           <th>Prodotto</th>
@@ -143,30 +146,53 @@
   <div id="orderSummary"></div>
 
   <script>
-    const fruits = ["Mele", "Pere", "Banane", "Arance", "Kiwi", "Fragole", "Uva"];
-    const vegetables = ["Carote", "Zucchine", "Pomodori", "Cetrioli", "Insalata", "Patate", "Cipolle", "Peperoni"];
+    const fruits = [
+      "Mele", "Mele golden", "Mele rosse", "Mele smith", "Pere williams", "Pere abate", "Pere kaiser",
+      "Banane", "Arance", "Arance cartone", "Arance non trattate", "Clementini", "Pompelmi", "Kiwi",
+      "Uva bianca", "Uva nera", "Uva schiacciata", "Uva senza semi",
+      "Lamponi", "Fragole", "Fragoline bosco", "More", "Mirtilli", "Ribes",
+      "Albicocche", "Pesche gialle", "Pesche bianche", "Pesche tabaccaie", "Pesche noci", "Susine rosse", "Susine gialle",
+      "Mango", "Papaya", "Meloni lisci", "Meloni rete", "Cocomero", "Limoni", "Lime", "Ananas", "Phisalis"
+    ];
 
-    function creaRiga(product) {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${product}</td>
-        <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
-        <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
-        <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
-      `;
-      return row;
+    const vegetables = [
+      "Zucchine", "Pomodori", "Pomodori Hol", "Ciliegini", "Piccadilly", "Datterini", "San marzano",
+      "Cetrioli", "Peperoni rossi", "Peperoni gialli", "Melanzane", "Melanzane viola",
+      "Carote vassoi", "Carote sfuse", "Finocchi",
+      "Cavolo nero", "Verza", "Cappuccio v\\b",
+      "Broccoli", "Rape", "Gentile", "Romana", "Iceberg", "Riccia", "Scarola", "Treviso", "Lattuga", "Lattughino x 8",
+      "Bietola", "Radicchio", "Cipolle rosse", "Cipolle bionde", "Tropea", "Aglio",
+      "Prezzemolo", "Salvia", "Ramerino", "Porri", "Zucche nere", "Zucche fiore", "Zucca gialla",
+      "Fiori di zucca", "Rucola", "Rucola x 500", "Rucola x 8", "Valeriana x 8",
+      "Scalogno", "Belga", "Topinambur", "Sedano rapa", "Ginger", "Chili"
+    ];
+
+    const other = [
+      "Uova", "Ceci", "Ceci cotti", "Fagioli cotti", "Borlotti", "Farro", "Cannellini", "Piattellini",
+      "Spinaci cotti", "Bietola cotta", "Barbabietola cotta"
+    ];
+
+    function addRows(list, tableId) {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      list.forEach(product => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${product}</td>
+          <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
+          <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
+          <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
+        `;
+        tbody.appendChild(row);
+      });
     }
 
-    const fruitTbody = document.querySelector("#fruitTable tbody");
-    fruits.forEach(product => fruitTbody.appendChild(creaRiga(product)));
-
-    const vegetableTbody = document.querySelector("#vegetableTable tbody");
-    vegetables.forEach(product => vegetableTbody.appendChild(creaRiga(product)));
+    addRows(fruits, "fruitTable");
+    addRows(vegetables, "vegTable");
+    addRows(other, "otherTable");
 
     function exclusiveInput(input) {
       const row = input.parentElement.parentElement;
       const inputs = row.querySelectorAll("input");
-
       if (input.value > 0) {
         inputs.forEach(i => {
           if (i !== input) i.disabled = true;
@@ -187,7 +213,6 @@
       }
 
       const rows = [...document.querySelectorAll("table tbody tr")];
-
       rows.forEach(row => {
         const prodotto = row.cells[0].textContent;
         const casse = parseInt(row.cells[1].querySelector("input").value);
@@ -207,7 +232,6 @@
       });
 
       const div = document.getElementById("orderSummary");
-
       if (ordini.length === 0) {
         div.innerHTML = "<i>Nessun prodotto selezionato.</i>";
         document.getElementById("submitButton").disabled = true;
@@ -215,12 +239,7 @@
       }
 
       div.innerHTML = `<b>${name}</b><ul>` + summary.map(s => `<li>${s}</li>`).join("") + "</ul>";
-
-      window.currentOrder = {
-        nome: name,
-        ordini: ordini
-      };
-
+      window.currentOrder = { nome: name, ordini: ordini };
       document.getElementById("submitButton").disabled = false;
     }
 
@@ -241,5 +260,6 @@
       document.getElementById("submitButton").disabled = true;
     }
   </script>
+
 </body>
 </html>
