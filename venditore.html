@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gestione Ordini - Venditore</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
@@ -60,13 +60,17 @@
 </head>
 <body>
 
-  <h1>Ordini Ricevuti</h1>
-  <div id="ordiniContainer"></div>
+  <!-- Contenuto da esportare -->
+  <div id="contenutoPDF">
+    <h1>Ordini Ricevuti</h1>
+    <div id="ordiniContainer"></div>
 
-  <h2>Riepilogo Totale per Data di Consegna</h2>
-  <div id="riepilogo"></div>
+    <h2>Riepilogo Totale per Data di Consegna</h2>
+    <div id="riepilogo"></div>
+  </div>
 
-  <button onclick="generaPDFpaginaCompleta()">Scarica PDF dell’intera schermata</button>
+  <!-- Pulsante esportazione -->
+  <button onclick="generaPDFpaginaCompleta()">📄 Scarica PDF della schermata</button>
 
   <script>
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQjgeooMgoZhQ5c08tQa5fii92HhzX9y-4pmZr4b_Ew8kqHi8S5R4I7xRK6CF3Agi3BlIc7P9p16zX-/pub?output=csv";
@@ -163,7 +167,8 @@
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
-      html2pdf().set(opzioni).from(document.body).save();
+      const contenuto = document.getElementById("contenutoPDF");
+      html2pdf().set(opzioni).from(contenuto).save();
     }
 
     caricaOrdini();
