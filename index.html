@@ -34,6 +34,7 @@
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       width: 100%;
+      margin-bottom: 40px;
     }
 
     table {
@@ -41,7 +42,6 @@
       min-width: 600px;
       background-color: #fff;
       border-collapse: collapse;
-      margin-bottom: 20px;
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -105,10 +105,25 @@
 
   <h2>Inserisci il tuo nome:</h2>
   <input type="text" id="customerName" placeholder="Nome cliente">
-  
-  <h2>Ordina i tuoi prodotti:</h2>
+
+  <h2>Lista Frutta 🍎</h2>
   <div class="table-container">
-    <table id="orderTable">
+    <table id="fruitTable">
+      <thead>
+        <tr>
+          <th>Prodotto</th>
+          <th>Casse</th>
+          <th>Kg</th>
+          <th>Numero</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <h2>Lista Verdura 🥕</h2>
+  <div class="table-container">
+    <table id="vegetableTable">
       <thead>
         <tr>
           <th>Prodotto</th>
@@ -128,24 +143,25 @@
   <div id="orderSummary"></div>
 
   <script>
-    const products = [
-      "Mele", "Pere", "Banane", "Arance", "Kiwi",
-      "Fragole", "Uva", "Carote", "Zucchine", "Pomodori",
-      "Cetrioli", "Insalata", "Patate", "Cipolle", "Peperoni"
-    ];
+    const fruits = ["Mele", "Pere", "Banane", "Arance", "Kiwi", "Fragole", "Uva"];
+    const vegetables = ["Carote", "Zucchine", "Pomodori", "Cetrioli", "Insalata", "Patate", "Cipolle", "Peperoni"];
 
-    const tbody = document.querySelector("#orderTable tbody");
-
-    products.forEach(product => {
+    function creaRiga(product) {
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${product}</td>
-        <td><input type="number" min="0" value="0" class="casse" onchange="exclusiveInput(this)"></td>
-        <td><input type="number" min="0" value="0" class="kg" onchange="exclusiveInput(this)"></td>
-        <td><input type="number" min="0" value="0" class="numero" onchange="exclusiveInput(this)"></td>
+        <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
+        <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
+        <td><input type="number" min="0" value="0" onchange="exclusiveInput(this)"></td>
       `;
-      tbody.appendChild(row);
-    });
+      return row;
+    }
+
+    const fruitTbody = document.querySelector("#fruitTable tbody");
+    fruits.forEach(product => fruitTbody.appendChild(creaRiga(product)));
+
+    const vegetableTbody = document.querySelector("#vegetableTable tbody");
+    vegetables.forEach(product => vegetableTbody.appendChild(creaRiga(product)));
 
     function exclusiveInput(input) {
       const row = input.parentElement.parentElement;
@@ -170,7 +186,7 @@
         return;
       }
 
-      const rows = tbody.querySelectorAll("tr");
+      const rows = [...document.querySelectorAll("table tbody tr")];
 
       rows.forEach(row => {
         const prodotto = row.cells[0].textContent;
