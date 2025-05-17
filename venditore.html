@@ -24,11 +24,15 @@
       margin-bottom: 20px;
       border-radius: 8px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     th, td {
       border: 1px solid #ddd;
@@ -160,13 +164,20 @@
     }
 
     function generaPDFpaginaCompleta() {
+      const tables = document.querySelectorAll("table, .cliente-box");
+      tables.forEach(el => {
+        el.style.breakInside = "avoid";
+        el.style.pageBreakInside = "avoid";
+      });
+
       const opzioni = {
-        margin: 10,
+        margin: 5,
         filename: `ordini_completi_${new Date().toISOString().slice(0, 10)}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 1 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
+
       const contenuto = document.getElementById("contenutoPDF");
       html2pdf().set(opzioni).from(contenuto).save();
     }
