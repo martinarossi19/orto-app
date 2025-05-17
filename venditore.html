@@ -14,6 +14,10 @@
     h1 {
       color: #4caf50;
     }
+    h2 {
+      margin-top: 40px;
+      color: #2e7d32;
+    }
     .cliente-box {
       background: #fff;
       padding: 15px;
@@ -68,61 +72,71 @@
     async function caricaOrdini() {
       const response = await fetch(csvUrl);
       const csv = await response.text();
-      const righe = csv.trim().split("\n").slice(1); // Salta intestazione
-      const ordiniPerCliente = {};
+      const righe = csv.trim().split("\n").slice(1); // salta intestazione
+
+      const ordiniPerData = {};
       const riepilogo = {};
 
       righe.forEach(riga => {
-        const [timestamp, nome, prodotto, quantità, unità] = riga.split(",");
+        const [timestamp, nome, dataConsegna, prodotto, quantità, unità] = riga.split(",").map(c => c.trim());
 
-        if (!ordiniPerCliente[nome]) ordiniPerCliente[nome] = [];
-        ordiniPerCliente[nome].push({ prodotto, quantità, unità });
+        if (!ordiniPerData[dataConsegna]) ordiniPerData[dataConsegna] = {};
+        if (!ordiniPerData[dataConsegna][nome]) ordiniPerData[dataConsegna][nome] = [];
 
-        const chiave = `${prodotto} (${unità})`;
-        riepilogo[chiave] = (riepilogo[chiave] || 0) + parseFloat(quantità);
+        ordiniPerData[dataConsegna][nome].push({ prodotto, quantità, unità });
+
+        const key = `${prodotto} (${unità})`;
+        riepilogo[key] = (riepilogo[key] || 0) + parseFloat(quantità);
       });
 
-      mostraOrdini(ordiniPerCliente);
+      mostraOrdini(ordiniPerData);
       mostraRiepilogo(riepilogo);
     }
 
-    function mostraOrdini(ordiniPerCliente) {
+    function mostraOrdini(ordiniPerData) {
       const container = document.getElementById("ordiniContainer");
       container.innerHTML = "";
 
-      for (const cliente in ordiniPerCliente) {
-        const box = document.createElement("div");
-        box.className = "cliente-box";
-        box.innerHTML = `<h3>${cliente}</h3>`;
+      Object.keys(ordiniPerData).sort().forEach(data => {
+        const dataSection = document.createElement("div");
+        dataSection.innerHTML = `<h2>Data consegna: ${data}</h2>`;
 
-        const tabella = document.createElement("table");
-        tabella.innerHTML = `
-          <thead><tr><th>Prodotto</th><th>Quantità</th><th>Unità</th></tr></thead>
-          <tbody>
-            ${ordiniPerCliente[cliente].map(o => `
-              <tr><td>${o.prodotto}</td><td>${o.quantità}</td><td>${o.unità}</td></tr>
-            `).join("")}
-          </tbody>
-        `;
+        Object.entries(ordiniPerData[data]).forEach(([cliente, ordini]) => {
+          const box = document.createElement("div");
+          box.className = "cliente-box";
+          box.innerHTML = `<h3>${cliente}</h3>`;
 
-        const btnPDF = document.createElement("button");
-        btnPDF.textContent = "Scarica PDF ordine";
-        btnPDF.onclick = () => {
-          const clone = box.cloneNode(true);
-          clone.querySelector("button").remove(); // rimuove il pulsante dal PDF
-          html2pdf().from(clone).save(`ordine_${cliente}.pdf`);
-        };
+          const tabella = document.createElement("table");
+          tabella.innerHTML = `
+            <thead><tr><th>Prodotto</th><th>Quantità</th><th>Unità</th></tr></thead>
+            <tbody>
+              ${ordini.map(o => `
+                <tr><td>${o.prodotto}</td><td>${o.quantità}</td><td>${o.unità}</td></tr>
+              `).join("")}
+            </tbody>
+          `;
 
-        box.appendChild(tabella);
-        box.appendChild(btnPDF);
-        container.appendChild(box);
-      }
+          const btnPDF = document.createElement("button");
+          btnPDF.textContent = "Scarica PDF ordine";
+          btnPDF.onclick = () => {
+            const clone = box.cloneNode(true);
+            clone.querySelector("button").remove();
+            html2pdf().from(clone).save(`ordine_${cliente}_${data}.pdf`);
+          };
+
+          box.appendChild(tabella);
+          box.appendChild(btnPDF);
+          dataSection.appendChild(box);
+        });
+
+        container.appendChild(dataSection);
+      });
     }
 
     function mostraRiepilogo(riepilogo) {
       const div = document.getElementById("riepilogo");
       const righe = Object.entries(riepilogo).map(([k, v]) => `
-        <tr><td>${k}</td><td>${v}</td></tr>
+        <tr><td>${k}</td><td>${v.toFixed(2)}</td></tr>
       `).join("");
 
       div.innerHTML = `
