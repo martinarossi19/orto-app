@@ -165,6 +165,8 @@
 
     function generaPDF() {
       const contenuto = document.createElement("div");
+      contenuto.style.position = "absolute";
+      contenuto.style.left = "-9999px";
       contenuto.innerHTML = `<h2>Rimanenze - ${new Date().toLocaleDateString()}</h2>`;
       const allTables = document.querySelectorAll("table");
 
@@ -179,7 +181,17 @@
         contenuto.appendChild(clone);
       });
 
-      html2pdf().from(contenuto).save(`rimanenze_${new Date().toISOString().slice(0,10)}.pdf`);
+      document.body.appendChild(contenuto);
+
+      html2pdf().set({
+        margin: 10,
+        filename: `rimanenze_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 1 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(contenuto).save().then(() => {
+        document.body.removeChild(contenuto);
+      });
     }
   </script>
 
