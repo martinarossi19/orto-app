@@ -40,13 +40,14 @@
       color: white;
     }
     button {
-      margin-top: 10px;
+      margin-top: 30px;
       background-color: #4caf50;
       color: white;
       border: none;
-      padding: 8px 16px;
+      padding: 10px 20px;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
     }
     #riepilogo {
       background: #ffffff;
@@ -64,6 +65,8 @@
 
   <h2>Riepilogo Totale per Data di Consegna</h2>
   <div id="riepilogo"></div>
+
+  <button onclick="generaPDFpaginaCompleta()">Scarica PDF dell’intera schermata</button>
 
   <script>
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQjgeooMgoZhQ5c08tQa5fii92HhzX9y-4pmZr4b_Ew8kqHi8S5R4I7xRK6CF3Agi3BlIc7P9p16zX-/pub?output=csv";
@@ -85,12 +88,10 @@
         data.setHours(0, 0, 0, 0);
         if (data < oggi) return;
 
-        // Ordini per cliente
         if (!ordiniPerData[dataConsegna]) ordiniPerData[dataConsegna] = {};
         if (!ordiniPerData[dataConsegna][nome]) ordiniPerData[dataConsegna][nome] = [];
         ordiniPerData[dataConsegna][nome].push({ prodotto, quantità, unità });
 
-        // Riepilogo per data
         if (!riepilogoPerData[dataConsegna]) riepilogoPerData[dataConsegna] = {};
         const key = `${prodotto} (${unità})`;
         riepilogoPerData[dataConsegna][key] = (riepilogoPerData[dataConsegna][key] || 0) + parseFloat(quantità);
@@ -108,9 +109,7 @@
         const dataSection = document.createElement("div");
         dataSection.innerHTML = `<h2>Data consegna: ${data}</h2>`;
 
-        const clienti = ordiniPerData[data];
-
-        Object.entries(clienti).forEach(([cliente, ordini]) => {
+        Object.entries(ordiniPerData[data]).forEach(([cliente, ordini]) => {
           const box = document.createElement("div");
           box.className = "cliente-box";
           box.innerHTML = `<h3>${cliente}</h3>`;
@@ -125,16 +124,7 @@
             </tbody>
           `;
 
-          const btnPDF = document.createElement("button");
-          btnPDF.textContent = "Scarica PDF ordine";
-          btnPDF.onclick = () => {
-            const contenuto = document.createElement("div");
-            contenuto.innerHTML = `<h2>Ordine - ${cliente} (${data})</h2>` + tabella.outerHTML;
-            html2pdf().from(contenuto).save(`ordine_${cliente}_${data}.pdf`);
-          };
-
           box.appendChild(tabella);
-          box.appendChild(btnPDF);
           dataSection.appendChild(box);
         });
 
@@ -160,18 +150,20 @@
           <tbody>${righe}</tbody>
         `;
 
-        const btnPDF = document.createElement("button");
-        btnPDF.textContent = "Scarica PDF riepilogo";
-        btnPDF.onclick = () => {
-          const contenuto = document.createElement("div");
-          contenuto.innerHTML = `<h2>Riepilogo ${data}</h2>` + tabella.outerHTML;
-          html2pdf().from(contenuto).save(`riepilogo_${data}.pdf`);
-        };
-
         section.appendChild(tabella);
-        section.appendChild(btnPDF);
         container.appendChild(section);
       });
+    }
+
+    function generaPDFpaginaCompleta() {
+      const opzioni = {
+        margin: 10,
+        filename: `ordini_completi_${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opzioni).from(document.body).save();
     }
 
     caricaOrdini();
