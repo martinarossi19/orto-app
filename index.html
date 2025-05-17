@@ -257,7 +257,8 @@
         alert("Genera prima il resoconto.");
         return;
       }
-      fetch("https://script.google.com/macros/s/AKfycbzbt8F9QRI4XCOdUYHvtYJjotB10qGO-wpK33LJmVAE47zwopqHdqY7T0PRvvDwWEK0SQ/exec", {
+      console.log("Ordine inviato:", window.currentOrder); // 👉 Aggiungi questo
+      fetch("https://script.google.com/macros/s/AKfycbwiX57MnQ-QTtCf-6sQJYiwVWxvuRkoVTtzMLl95P5jrw09iuof0-eCHv9Q_2STYO_X/exec", {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
