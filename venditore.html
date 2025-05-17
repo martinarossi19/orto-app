@@ -44,7 +44,7 @@
       color: white;
     }
     button {
-      margin-top: 30px;
+      margin-top: 10px;
       background-color: #4caf50;
       color: white;
       border: none;
@@ -53,28 +53,16 @@
       cursor: pointer;
       font-size: 16px;
     }
-    #riepilogo {
-      background: #ffffff;
-      margin-top: 40px;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    .pdf-button {
+      margin-top: 10px;
+      margin-bottom: 40px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Contenuto da esportare -->
-  <div id="contenutoPDF">
-    <h1>Ordini Ricevuti</h1>
-    <div id="ordiniContainer"></div>
-
-    <h2>Riepilogo Totale per Data di Consegna</h2>
-    <div id="riepilogo"></div>
-  </div>
-
-  <!-- Pulsante esportazione -->
-  <button onclick="generaPDFpaginaCompleta()">📄 Scarica PDF della schermata</button>
+  <h1>Ordini Ricevuti</h1>
+  <div id="ordiniContainer"></div>
 
   <script>
     const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQjgeooMgoZhQ5c08tQa5fii92HhzX9y-4pmZr4b_Ew8kqHi8S5R4I7xRK6CF3Agi3BlIc7P9p16zX-/pub?output=csv";
@@ -105,19 +93,23 @@
         riepilogoPerData[dataConsegna][key] = (riepilogoPerData[dataConsegna][key] || 0) + parseFloat(quantità);
       });
 
-      mostraOrdini(ordiniPerData);
-      mostraRiepilogo(riepilogoPerData);
+      mostraOrdini(ordiniPerData, riepilogoPerData);
     }
 
-    function mostraOrdini(ordiniPerData) {
+    function mostraOrdini(ordiniPerData, riepilogoPerData) {
       const container = document.getElementById("ordiniContainer");
       container.innerHTML = "";
 
       Object.keys(ordiniPerData).sort().forEach(data => {
         const dataSection = document.createElement("div");
-        dataSection.innerHTML = `<h2>Data consegna: ${data}</h2>`;
+        const contenutoPDF = document.createElement("div");
+        contenutoPDF.className = "contenuto-pdf";
 
-        Object.entries(ordiniPerData[data]).forEach(([cliente, ordini]) => {
+        contenutoPDF.innerHTML = `<h2>Data consegna: ${data}</h2>`;
+
+        const clienti = ordiniPerData[data];
+
+        Object.entries(clienti).forEach(([cliente, ordini]) => {
           const box = document.createElement("div");
           box.className = "cliente-box";
           box.innerHTML = `<h3>${cliente}</h3>`;
@@ -133,53 +125,46 @@
           `;
 
           box.appendChild(tabella);
-          dataSection.appendChild(box);
+          contenutoPDF.appendChild(box);
         });
 
+        const riepilogo = riepilogoPerData[data];
+        if (riepilogo) {
+          const section = document.createElement("div");
+          section.className = "cliente-box";
+          section.innerHTML = `<h3>Riepilogo ${data}</h3>`;
+
+          const righe = Object.entries(riepilogo)
+            .map(([prod, qty]) => `<tr><td>${prod}</td><td>${qty.toFixed(2)}</td></tr>`).join("");
+
+          const tabella = document.createElement("table");
+          tabella.innerHTML = `
+            <thead><tr><th>Prodotto</th><th>Totale</th></tr></thead>
+            <tbody>${righe}</tbody>
+          `;
+
+          section.appendChild(tabella);
+          contenutoPDF.appendChild(section);
+        }
+
+        // pulsante PDF per questa data
+        const btn = document.createElement("button");
+        btn.className = "pdf-button";
+        btn.textContent = "📄 Scarica PDF per questa data";
+        btn.onclick = () => {
+          html2pdf().set({
+            margin: 10,
+            filename: `ordini_${data}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 1 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          }).from(contenutoPDF).save();
+        };
+
+        dataSection.appendChild(contenutoPDF);
+        dataSection.appendChild(btn);
         container.appendChild(dataSection);
       });
-    }
-
-    function mostraRiepilogo(riepilogoPerData) {
-      const container = document.getElementById("riepilogo");
-      container.innerHTML = "";
-
-      Object.keys(riepilogoPerData).sort().forEach(data => {
-        const section = document.createElement("div");
-        section.className = "cliente-box";
-        section.innerHTML = `<h3>Riepilogo ${data}</h3>`;
-
-        const righe = Object.entries(riepilogoPerData[data])
-          .map(([prod, qty]) => `<tr><td>${prod}</td><td>${qty.toFixed(2)}</td></tr>`).join("");
-
-        const tabella = document.createElement("table");
-        tabella.innerHTML = `
-          <thead><tr><th>Prodotto</th><th>Totale</th></tr></thead>
-          <tbody>${righe}</tbody>
-        `;
-
-        section.appendChild(tabella);
-        container.appendChild(section);
-      });
-    }
-
-    function generaPDFpaginaCompleta() {
-      const tables = document.querySelectorAll("table, .cliente-box");
-      tables.forEach(el => {
-        el.style.breakInside = "avoid";
-        el.style.pageBreakInside = "avoid";
-      });
-
-      const opzioni = {
-        margin: 5,
-        filename: `ordini_completi_${new Date().toISOString().slice(0, 10)}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 1 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      const contenuto = document.getElementById("contenutoPDF");
-      html2pdf().set(opzioni).from(contenuto).save();
     }
 
     caricaOrdini();
