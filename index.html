@@ -94,6 +94,8 @@
 
   <h2>Inserisci il tuo nome:</h2>
   <input type="text" id="customerName" placeholder="Nome cliente">
+  <h2>Data di consegna:</h2>
+  <input type="date" id="deliveryDate">
 
   <h2>🍎 Frutta</h2>
   <div class="table-container">
@@ -146,6 +148,12 @@
   <div id="orderSummary"></div>
 
   <script>
+  // Imposta domani come data minima disponibile
+  const deliveryInput = document.getElementById("deliveryDate");
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  deliveryInput.min = tomorrow.toISOString().split("T")[0]
+  
     const fruits = [
       "Mele", "Mele golden", "Mele rosse", "Mele smith", "Pere williams", "Pere abate", "Pere kaiser",
       "Banane", "Arance", "Arance cartone", "Arance non trattate", "Clementini", "Pompelmi", "Kiwi",
@@ -204,6 +212,11 @@
 
     function generateSummary() {
       const name = document.getElementById("customerName").value.trim();
+      const date = document.getElementById("deliveryDate").value;
+      if (!name || !date) {
+        alert("Inserisci nome e data di consegna.");
+        return;
+      }
       const summary = [];
       const ordini = [];
 
@@ -239,7 +252,7 @@
       }
 
       div.innerHTML = `<b>${name}</b><ul>` + summary.map(s => `<li>${s}</li>`).join("") + "</ul>";
-      window.currentOrder = { nome: name, ordini: ordini };
+      window.currentOrder = { nome: name, data: date, ordini: ordini };
       document.getElementById("submitButton").disabled = false;
     }
 
