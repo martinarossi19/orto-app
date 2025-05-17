@@ -151,7 +151,7 @@
   // Imposta domani come data minima disponibile
   const deliveryInput = document.getElementById("deliveryDate");
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  //tomorrow.setDate(tomorrow.getDate() + 1);
   deliveryInput.min = tomorrow.toISOString().split("T")[0]
   
     const fruits = [
